@@ -7,6 +7,7 @@ module.exports = (sequelize, Sequelize) => {
     },
     pseudo: {
       type: Sequelize.STRING,
+      unique: true,
       allowNull: false,
     },
     password: {

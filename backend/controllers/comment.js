@@ -11,34 +11,89 @@ exports.create = (req, res, next) => {
     });
 };
 
-exports.update = (req, res, next) => {
-  const sauceObject = req.file
-    ? {
-        ...JSON.parse(req.body.sauce),
-        imageUrl: `${req.protocol}://${req.get("host")}/images/${
-          req.file.filename
-        }`,
-      }
-    : { ...req.body };
-  Sauce.updateOne(
-    { _id: req.params.id },
-    { ...sauceObject, _id: req.params.id }
-  )
-    .then(() => res.status(200).json({ message: "Objet modifié !" }))
+exports.delete = (req, res, next) => {
+  Comment.destroy({
+    where: {
+      id: req.params.id,
+    },
+  })
+    .then(() => res.status(200).json({ message: "commentaire supprimé !" }))
     .catch((error) => res.status(400).json({ error }));
 };
 
-exports.delete = (req, res, next) => {
-  Sauce.findOne({ _id: req.params.id })
-    .then((sauce) => {
-      const filename = sauce.imageUrl.split("/images/")[1];
-      fs.unlink(`images/${filename}`, () => {
-        Sauce.deleteOne({ _id: req.params.id })
-          .then(() => res.status(200).json({ message: "Objet supprimé !" }))
-          .catch((error) => res.status(400).json({ error }));
-      });
+//Test
+exports.getOne = (req, res, next) => {
+  Comment.findAll({
+    include: [
+      {
+        model: User,
+        attributes: ["id", "pseudo"],
+      },
+    ],
+    where: { id: req.params.id },
+  })
+    .then((data) => {
+      if (!data) {
+        return res.status(404).json({ error: "Commentaire non trouvé !" });
+      }
+      const comment = data[0].dataValues;
+      return res.status(200).json(comment);
     })
-    .catch((error) => res.status(500).json({ error }));
+    .catch((error) => res.status(503).json({ error }));
+};
+
+exports.signal = (req, res) => {
+  Comment.update(
+    {
+      isSignaled: true,
+    },
+    {
+      where: {
+        id: req.params.id,
+      },
+    }
+  )
+    .then(() => res.status(201).json({ message: "Signalement confirmé!" }))
+    .catch((error) =>
+      res.status(500).json({ error, message: "Une erreur est survenue" })
+    );
+};
+
+exports.unsignal = (req, res) => {
+  Comment.update(
+    {
+      isSignaled: false,
+    },
+    {
+      where: {
+        id: req.params.id,
+      },
+    }
+  )
+    .then(() => res.status(201).json({ message: "Signalement annulé!" }))
+    .catch((error) =>
+      res.status(500).json({ error, message: "Une erreur est survenue" })
+    );
+};
+
+exports.getSignaled = (req, res, next) => {
+  Post.findAll({
+    include: [
+      {
+        model: User,
+        attributes: ["id", "pseudo"],
+      },
+    ],
+    where: { isSignaled: true },
+  })
+    .then((data) => {
+      if (!data) {
+        return res.status(404).json({ error: "Aucun commentaire signalé !" });
+      }
+      const comments = data.map((item) => item.dataValues);
+      return res.status(200).json(comments);
+    })
+    .catch((error) => res.status(503).json({ error }));
 };
 
 exports.getAll = (req, res, next) => {
