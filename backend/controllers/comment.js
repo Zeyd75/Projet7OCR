@@ -77,7 +77,7 @@ exports.unsignal = (req, res) => {
 };
 
 exports.getSignaled = (req, res, next) => {
-  Post.findAll({
+  Comment.findAll({
     include: [
       {
         model: User,

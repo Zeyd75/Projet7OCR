@@ -38,7 +38,10 @@ exports.login = (req, res, next) => {
           if (!valid) {
             return res
               .status(401)
-              .json({ error: "MdP incorrect !", code: "wrong_password" });
+              .json({
+                error: "Mot de passe incorrect !",
+                code: "wrong_password",
+              });
           }
           res.status(200).json({
             userId: user.id,
