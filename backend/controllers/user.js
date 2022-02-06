@@ -36,18 +36,20 @@ exports.login = (req, res, next) => {
         .compare(req.body.password, user.password)
         .then((valid) => {
           if (!valid) {
-            return res
-              .status(401)
-              .json({
-                error: "Mot de passe incorrect !",
-                code: "wrong_password",
-              });
+            return res.status(401).json({
+              error: "Mot de passe incorrect !",
+              code: "wrong_password",
+            });
           }
           res.status(200).json({
             userId: user.id,
-            token: jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
-              expiresIn: "24h",
-            }),
+            token: jwt.sign(
+              { userId: user.id, isAdmin: user.isAdmin },
+              process.env.JWT_SECRET,
+              {
+                expiresIn: "24h",
+              }
+            ),
             isAdmin: user.isAdmin,
           });
         })
@@ -110,6 +112,35 @@ exports.update = async (req, res) => {
       },
     });
     res.status(201).json({ message: "Profil modifié!" });
+  } catch (error) {
+    res.status(500).json({ error, message: "Une erreur est survenue" });
+  }
+};
+
+exports.delete = async (req, res, next) => {
+  try {
+    const userResults = await User.findAll({
+      where: { id: req.params.id },
+    });
+    if (userResults.length == 0) {
+      return res
+        .status(401)
+        .json({ error: "Utilisateur non trouvé !", code: "wrong_id" });
+    }
+    const user = userResults[0].dataValues;
+    const valid = await bcrypt.compare(req.body.password, user.password);
+    if (!valid) {
+      return res
+        .status(401)
+        .json({ error: "MdP incorrect !", code: "wrong_password" });
+    }
+    User.destroy({
+      where: {
+        id: req.params.id,
+      },
+    })
+      .then(() => res.status(200).json({ message: "compte supprimé !" }))
+      .catch((error) => res.status(400).json({ error }));
   } catch (error) {
     res.status(500).json({ error, message: "Une erreur est survenue" });
   }
