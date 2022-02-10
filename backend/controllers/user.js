@@ -58,7 +58,6 @@ exports.login = (req, res, next) => {
         });
     })
     .catch((error) => {
-      console.log("############", error);
       res.status(503).json({ error });
     });
 };
@@ -72,7 +71,6 @@ exports.getUser = (req, res, next) => {
         return res.status(401).json({ error: "Utilisateur non trouvé !" });
       }
       const user = data[0].dataValues;
-      console.log("############", user);
       res.status(200).json(user);
     })
     .catch((error) => res.status(503).json({ error }));
